@@ -14,6 +14,8 @@ import { IpcService } from '../../../../shared/services/electron/ipc.service';
   styleUrl: './middleware.component.css'
 })
 export class MiddlewareComponent implements OnInit{
+  protected currentStatus: string = "";
+  
   constructor(
     private _rt: Router,
     private _ipc: IpcService
@@ -30,9 +32,13 @@ export class MiddlewareComponent implements OnInit{
     // });
     // const notification = notyf.success('Checking launcher integrity...');
 
+    this._ipc.once('update:available', (event, data) => {
+      console.log(data)
+    });
+
     this._ipc.send('configuration:verify');
     this._ipc.on('configuration:reply', (event, data) => {
-      console.log(data)
+      // console.log(data)
       // if(data){
       //   this._rt.navigate(['/auth/login']);
       // } else {

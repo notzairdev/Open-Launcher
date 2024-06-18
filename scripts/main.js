@@ -137,6 +137,28 @@ const exampleMenuTemplate = [
     }
 ]
 
+//AutoUpdater
+autoUpdater.on("update-available", (info) => {
+    ipcMain.emit("update:available", {
+        available: true,
+        information: info
+    });
+})
+
+autoUpdater.on("update-not-available", (info) => {
+    ipcMain.emit("update:available", {
+        available: false,
+        information: info
+    });
+});
+
+autoUpdater.on("update-downloaded", (progress) => {
+    ipcMain.emit("update:downloaded", {
+        downloaded: true,
+        progress: progress
+    });
+});
+
 //Discord RPC
 const clientId = process.env.DISCORD_CLIENT;
 
