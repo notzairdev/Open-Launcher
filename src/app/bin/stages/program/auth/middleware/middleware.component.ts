@@ -30,20 +30,20 @@ export class MiddlewareComponent implements OnInit{
     //     y: 'bottom',
     //   }
     // });
-    // const notification = notyf.success('Checking launcher integrity...');
-
-    this._ipc.once('update:available', (event, data) => {
-      console.log(data)
-    });
 
     this._ipc.send('configuration:verify');
     this._ipc.on('configuration:reply', (event, data) => {
       // console.log(data)
-      // if(data){
-      //   this._rt.navigate(['/auth/login']);
-      // } else {
+      if(data){
+        if(data.account.active){
+          
+        }
+        else{
+          this._rt.navigate(['/auth']);
+        }
+      } else {
       //   this._rt.navigate(['/auth/launcher']);
-      // }
+      }
     });
   }
 

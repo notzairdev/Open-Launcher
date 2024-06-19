@@ -1,0 +1,36 @@
+<div style="height: 101.5%; background-image: url('imgs/bg_intro_2.png'); background-size: cover; top: -10px;" class="text-white user-select-none position-fixed w-100">
+    <div class="p-5 h-100">
+        <div class="d-flex justify-content-center">
+            <img src="imgs/branding.png" style="width: 270px; height: auto;">
+        </div>
+        <!-- <p class="small">Inicia sesión en Open Launcher</p> -->
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="d-flex flex-column text-center">
+                <h5>Continuar con: </h5>
+                <button type="button" [disabled]="spinnerBtn" class="rounded-0 btn btn-minecraft-a d-flex align-items-center gap-1 pt-2 pb-2 ps-3 pe-3 mt-2" (click)="createNewMicrosoftToken()">
+                    @if (!spinnerBtn) {
+                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" width="16" height="16" preserveAspectRatio="xMidYMid">
+                            <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z" />
+                            <path fill="#80CC28" d="M256 121.666H134.335V0H256z" />
+                            <path fill="#00ADEF" d="M121.663 256.002H0V134.336h121.663z" />
+                            <path fill="#FBBC09" d="M256 256.002H134.335V134.336H256z" />
+                        </svg>
+                        Iniciar sesión con Microsoft
+                    }
+                    @else {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div class="spinner-border text-white spinner-border-sm" role="status">
+                            </div>
+                        </div>
+                        Creando conexión con Microsoft...
+                    }
+                </button>
+
+                <button type="button" class="rounded-0 btn btn-minecraft-b text-center pt-2 pb-2 ps-3 pe-3 mt-2">
+                    <i class="bi bi-person"></i>
+                    Iniciar sesión como invitado
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

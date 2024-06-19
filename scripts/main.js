@@ -1,27 +1,26 @@
-const { app, ipcMain, BrowserWindow, Menu } = require("electron");
+const { app, ipcMain, BrowserWindow, Menu, globalShortcut } = require("electron");
 const { setupTitlebar, attachTitlebarToWindow } = require('custom-electron-titlebar/main')
-
-//File data
-const fs = require('fs')
-const path = require('path')
 
 //Discord RPC
 const DiscordRPC = require('discord-rpc')
+
+const path = require("path");
 
 //AutoUpdater
 const { autoUpdater, AppUpdater } = require("electron-updater");
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 
-//Storage data
-const os = require('os');
-const storage = require('electron-json-storage');
-storage.setDataPath(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'ApplicationData'));
-
 //Dotenv
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
-let appWin;
+//Providers
+const { getXboxAuth } = require('./resources/providers/launcher.provider')
+const { createConfiguration, readConfiguration } = require('./resources/providers/storage.provider')
+
+let appWin = null;
+let authWindow = null;
+
 setupTitlebar()
 
 createWindow = () => {
@@ -51,68 +50,50 @@ createWindow = () => {
 
     attachTitlebarToWindow(appWin)
 
+    globalShortcut.register('CommandOrControl+Shift+I', () => {
+        appWin.webContents.openDevTools();
+    });
+
     appWin.on("closed", () => {
         appWin = null;
     });
 }
 
-function generateNewConfigurationJSON() {
-    const downloadsDir = fs.existsSync(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'DownloadData'))
-    const instancesDir = fs.existsSync(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Instances'))
-    const updatesDir = fs.existsSync(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Updates'))
-
-    if (downloadsDir === false) {
-        fs.mkdir(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'DownloadData'), { recursive: true }, (err) => {
-            if (err) throw err;
-        });
-    }
-
-    if (instancesDir === false) {
-        fs.mkdir(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Instances'), { recursive: true }, (err) => {
-            if (err) throw err;
-        });
-    }
-
-    if (updatesDir === false) {
-        fs.mkdir(path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Updates'), { recursive: true }, (err) => {
-            if (err) throw err;
-        });
-    }
-
-    storage.get('configuration', (error, data) => {
-        if (error) throw error;
-
-        const stringify = JSON.stringify(data)
-
-        if (stringify === '{}') {
-            const data = {
-                init: true,
-                currentVersion: '0.0.1',
-                launcher: {
-                    downloadsDir: path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'DownloadData'),
-                    instances: path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Instances'),
-                    tempUpdates: path.join(os.homedir(), 'Aurora', 'MinecraftLauncher', 'Updates'),
-                }
-            }
-
-            storage.set('configuration', data, function (err) {
-                if (err) throw err;
-            })
-
-            console.log("First time opening the app, generating new configuration file...");
-
+createMicrosoftPopup = () => {
+    authWindow = new BrowserWindow({
+        width: 400,
+        height: 600,
+        autoHideMenuBar: true,
+        title: 'Open Launcher - Microsoft Authentication',
+        minimizable: false,
+        maximizable: false,
+        resizable: false,
+        icon: path.resolve(__dirname, 'resources/icon', 'icon_app_2.png'),
+        modal: true,
+        parent: appWin,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
         }
-        else {
-            console.log("Configuration file already exists, skipping generation...");
-        }
-    });
+    })
+
+    authWindow.loadURL('http://localhost:8080')
+
+    authWindow.on('closed', () => {
+        authWindow = null;
+    })
+}
+
+function closeAuthWindow() {
+    if (authWindow) {
+        authWindow.close();
+    } else {
+        console.log("No hay ventana de autenticación abierta para cerrar.");
+    }
 }
 
 app.on("ready", () => {
-    generateNewConfigurationJSON();
-
-    autoUpdater.checkForUpdates();
-
+    createConfiguration();
     createWindow();
 });
 
@@ -168,28 +149,54 @@ const rpc = new DiscordRPC.Client({
     transport: 'ipc'
 })
 
+const startTimestamp = new Date();
+
 async function setActivity() {
     if (!rpc || !appWin) {
         return;
     }
 
     rpc.setActivity({
-        details: `Song name`,
-        state: 'Artists name',
-        smallImageKey: 'appicon',
-        smallImageText: 'Aurora Music',
-        instance: false,
+        details: 'Iniciando sesión en el launcher',
+        largeImageKey: 'launchericon',
+        largeImageText: 'Open Launcher',
+        startTimestamp,
+        instance: false
     });
 }
 
-/* ipcMain is listening the "message" channel, and when the message arrives, 
-it replies with "pong" */
-ipcMain.on("message", (event) => event.reply("reply", "pong"));
+// rpc.on('ready', () => {
+//   setActivity();
 
-ipcMain.on("configuration:verify", (event) => {
-    storage.get('configuration', (error, data) => {
-        if (error) throw error;
+//   setInterval(() => {
+//     setActivity();
+//   }, 15e3);
+// });
 
-        event.reply("configuration:reply", data);
-    });
+// rpc.login({ clientId }).catch(console.error);
+
+ipcMain.on("configuration:verify", async (event) => {
+    const data = await readConfiguration();
+    event.reply("configuration:reply", data);
 })
+
+ipcMain.on("configuration:updates", (event) => {
+    autoUpdater.checkForUpdates();
+});
+
+ipcMain.on("discord:change", (event, args) => {
+    // console.log(args)
+})
+
+ipcMain.on("auth:microsoft", async (event, args) => {
+    // console.log(args)
+    
+    createMicrosoftPopup();
+    const microsoftResponse = await getXboxAuth();
+
+    if(microsoftResponse[0].isCancelled == true){
+        closeAuthWindow();
+    }
+
+    event.reply("auth:microsoft:reply", { authData: microsoftResponse });
+});

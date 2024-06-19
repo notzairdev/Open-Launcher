@@ -25,3 +25,35 @@ body {
 .font-a {
     font-family: 'Minecraft Type', sans-serif;
 }
+
+.btn-minecraft-a{
+    background-color: #159134;
+    color: white;
+}
+
+.btn-minecraft-a:hover{
+    background-color: #0d6e2b;
+    color: white;
+}
+
+.btn-minecraft-a:active{
+    background-color: #0d6e2b;
+    color: white;
+}
+
+.btn-minecraft-a:disabled{
+    background-color: #159134;
+    color: white;
+    border-color: transparent;
+}
+
+.btn-minecraft-b{
+    background-color: transparent;
+    color: white;
+}
+
+.btn-minecraft-b:hover{
+    background-color: transparent;
+    border-color: white;
+    color: white;
+}

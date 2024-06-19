@@ -3,7 +3,6 @@
   "version": "0.0.2",
   "description": "An open source Minecraft launcher",
   "homepage": "https://github.com/notzairdev/OpenLauncher#readme",
-  "types": "",
   "main": "scripts/main.js",
   "bugs": {
     "url": "https://github.com/notzairdev/OpenLauncher/issues"
@@ -11,7 +10,8 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "watch": "ng build --watch --configuration development",
+    "build": "ng build",
+    "watch": "ng build --watch",
     "test": "nodemon --exec electron ."
   },
   "private": false,
@@ -29,6 +29,7 @@
     },
     "publish": {
       "provider": "github",
+      "repo": "notzairdev/OpenLauncher",
       "releaseType": "release"
     }
   },
@@ -49,6 +50,8 @@
     "electron-json-storage": "^4.6.0",
     "electron-updater": "^6.2.1",
     "fs-extra": "^11.2.0",
+    "minecraft-auth": "^2.0.9",
+    "minecraft-launcher-core": "^3.18.1",
     "ngx-ui-loader": "^13.0.0",
     "notyf": "^3.10.0",
     "primeng": "^17.18.1",
