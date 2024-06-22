@@ -1,49 +1,70 @@
-const _auth = require('minecraft-auth')
+const { Auth, Xbox } = require('msmc')
 const { modifyConfiguration, readConfiguration } = require('./storage.provider')
-
-require('dotenv').config({path: '../../.env'})
 
 async function getXboxAuth() {
     return new Promise(async (resolve) => {
-        const MicrosoftAuth = _auth.MicrosoftAuth;
 
-        let account = new _auth.MicrosoftAccount();
-        console.log("Client ID:", process.env.MICROSOFT_CLIENTID);
-        console.log("App Secret:", process.env.MICROSOFT_APPSECRET);
-        MicrosoftAuth.setup({
-            appID: process.env.MICROSOFT_CLIENTID,
-            appSecret: process.env.MICROSOFT_APPSECRET,
-        });
-
-        try {
-            let pkce = MicrosoftAuth.generatePKCEPair();
-            let code = await MicrosoftAuth.listenForCode({pkcePair: pkce});
-
-            if (code !== undefined) {
-                await account.authFlow(code);
-                
-                const currentDataFile = await readConfiguration();
-                
-                currentDataFile.account.data = account;
-
-                const _editable = await modifyConfiguration(currentDataFile);
-
-                if(_editable === false) throw new Error("Failed to modify configuration file");
-
-                console.log(account)
-
-                resolve([{isCancelled: false, account: account}]);
+        try{
+            const authManager = new Auth("select_account");
+            const xboxManager = await authManager.launch("raw");
+            const token = await xboxManager.getMinecraft();
+            
+            if(!token){
+                throw new Error("Failed to get Minecraft token");
             }
-        } catch (exception) {
-            console.error(exception);
-            resolve([{
-                isCancelled: true,
-                reason: exception
-            }])
+            
+            const currentPacket = await readConfiguration();
+
+            if (!currentPacket) {
+                throw new Error("Failed to read configuration");
+            }
+
+            currentPacket.account.active = true;
+            currentPacket.account.data = token;
+
+            const _isEditable = await modifyConfiguration(currentPacket);
+
+            if (!_isEditable) {
+                throw new Error("Failed to modify configuration");
+            }
+            
+            resolve([{ isCancelled: false, account: token }]);
         }
+        catch(e){
+            console.log(e)
+            resolve([{isCancelled: true}]);
+        }
+
+    })
+}
+
+function refreshMinecraftToken(){
+    return new Promise(async (resolve) => {
+        const configurationJson = await readConfiguration();
+        const data = configurationJson.account.data;
+        const token = data.parent.msToken.refresh_token;
+
+        try{
+            const authManager = new Auth('login').refresh(token);
+            const xbxManager = (await authManager).validate();
+            
+            if(xbxManager == true){
+                const tokenObject = (await authManager).getMinecraft();
+                resolve(tokenObject);
+            }
+            else{
+                resolve(false);
+            }
+        }
+        catch(e){
+            console.log(e);
+            resolve(null);
+        }
+
     })
 }
 
 module.exports = {
-    getXboxAuth
+    getXboxAuth,
+    refreshMinecraftToken
 }

@@ -7,7 +7,7 @@
         <div class="d-flex justify-content-center align-items-center h-100">
             <div class="d-flex flex-column text-center">
                 <h5>Continuar con: </h5>
-                <button type="button" [disabled]="spinnerBtn" class="rounded-0 btn btn-minecraft-a d-flex align-items-center gap-1 pt-2 pb-2 ps-3 pe-3 mt-2" (click)="createNewMicrosoftToken()">
+                <button type="button" [disabled]="!isActiveAction" class="rounded-0 btn btn-minecraft-a d-flex align-items-center gap-1 pt-2 pb-2 ps-3 pe-3 mt-2" (click)="createNewMicrosoftToken()">
                     @if (!spinnerBtn) {
                         <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" width="16" height="16" preserveAspectRatio="xMidYMid">
                             <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z" />
@@ -26,10 +26,11 @@
                     }
                 </button>
 
-                <button type="button" class="rounded-0 btn btn-minecraft-b text-center pt-2 pb-2 ps-3 pe-3 mt-2">
+                <button type="button" [disabled]="!isActiveAction" (click)="offlineAccount()" class="rounded-0 btn btn-minecraft-b text-center pt-2 pb-2 ps-3 pe-3 mt-2">
                     <i class="bi bi-person"></i>
                     Iniciar sesión como invitado
                 </button>
+                
             </div>
         </div>
     </div>

@@ -12,7 +12,7 @@ function createConfiguration() {
     const downloadsPath = path.join(fullPath, 'DownloadData')
     const instancesPath = path.join(fullPath, 'Instances')
     const updatesPath = path.join(fullPath, 'Updates')
-
+    
     const downloadsDir = fs.existsSync(downloadsPath)
     const instancesDir = fs.existsSync(instancesPath)
     const updatesDir = fs.existsSync(updatesPath)
@@ -52,10 +52,17 @@ function createConfiguration() {
                 account: {
                     active: false,
                     data: {}
+                },
+                manifest: {
+                    directory: path.join(fullPath, 'ApplicationData', 'manifest.json'),
                 }
             }
 
             storage.set('configuration', data, function (err) {
+                if (err) throw err;
+            })
+
+            storage.set('manifest', { "versions": [], "lastplayed": null }, function (err) {
                 if (err) throw err;
             })
 
@@ -87,8 +94,87 @@ function modifyConfiguration(newData){
     })
 }
 
+function readManifestVersion(){
+    return new Promise(async (resolve, reject) => {
+        storage.get('manifest', (error, data) => {
+            if (error) reject(error);
+            
+            const stringify = JSON.stringify(data)
+            
+            resolve(stringify)
+        });
+    });
+}
+
+function writeManifestVersion(newVersion){
+    return new Promise(async (resolve, reject) => {
+        const currentManifest = JSON.parse(await readManifestVersion());
+        const versionTree = currentManifest.versions;
+
+        if(versionTree.length != 0){
+            for (let i = 0; i < versionTree.length; i++) {
+                if (versionTree[i].id == newVersion.id) {
+                    versionTree[i].currentState = newVersion.currentState;
+                }
+            }
+        }
+        else{
+            versionTree.push(newVersion);
+        }
+
+        currentManifest.versions = versionTree;
+
+        storage.set('manifest', currentManifest, function (err) {
+            if (err) reject(err);
+
+            resolve(true)
+        });
+    });
+}
+
+function readCurrentTickInstall(versionId){
+    return new Promise(async (resolve) => {
+        const currentManifest = JSON.parse(await readManifestVersion());
+        const versionTree = currentManifest.versions;
+
+        if(versionTree.length != 0){
+            for (let i = 0; i < versionTree.length; i++) {
+                if (versionTree[i].id == versionId) {
+                    resolve(versionTree[i].currentState);
+                }
+                else{
+                    resolve(0);
+                }
+            }
+        }
+        else{
+            resolve(0);
+        }
+    });
+
+}
+
+function writeLastPlayed(newVersion){
+    return new Promise(async (resolve, reject) => {
+        
+        const currentManifest = JSON.parse(await readManifestVersion());
+        currentManifest.lastplayed = newVersion;
+
+        storage.set('manifest', currentManifest, function (err) {
+            if (err) reject(err);
+
+            resolve(true)
+        });
+    });
+
+}
+
 module.exports = {
     createConfiguration,
     readConfiguration,
-    modifyConfiguration
+    modifyConfiguration,
+    readManifestVersion,
+    writeManifestVersion,
+    writeLastPlayed,
+    readCurrentTickInstall
 }

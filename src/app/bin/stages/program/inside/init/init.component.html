@@ -1,0 +1,54 @@
+<div class="info-section" style="user-select: none;">
+    <video autoplay muted loop>
+        <source src="video/minecraft.mp4" type="video/mp4">
+    </video>
+    <div class="position-absolute w-100 h-100">
+        <div class="d-flex justify-content-center mt-5">
+            <img src="imgs/main_gamelogo.png" style="width: auto; height: 12vh; filter: drop-shadow(0 0 0.55rem rgba(0, 0, 0, 0.8));">
+        </div>
+        <div style="height: 66%;">
+            <div class="d-flex w-100 h-100 flex-column justify-content-end align-items-center">
+                @for (item of CURRENT_FILES_DOWNLOAD; track $index) {
+                    <p class="m-0 text-white" [style]="{opacity: item.op, 'font-size': 'small'}">Descargando: {{item.name}}</p>
+                }
+            </div>
+            
+        </div>
+        <div class="row" style="background-color: rgba(0, 0, 0, 0.5); height: 14%;">
+            <div class="col-2 ms-4 d-flex flex-column justify-content-center gap-2">
+                <p class="m-0 text-white small">Selecciona tu versión:</p>
+                <select class="form-select border-0" (change)="comprobateIsInstalledVersion()" [disabled]="isLiveAction" [(ngModel)]="selectedVersion" pTooltip="Cambiar versión">
+                    @for (item of minecraftManifest; track $index) {
+                        <option value="{{item.id}}">{{item.id}}</option>
+                    }
+                </select>
+            </div>
+            <div class="col d-flex align-items-center">
+                
+                <button class="btn btn-grad ps-4 pe-4 text-truncate" style="margin-left: 16.8rem; width: 270px; max-width: 271px;" [disabled]="isLiveAction" (click)="downloadOrRunMinecraftVersion()" pTooltip="Iniciar" tooltipPosition="top">
+                    <h5 class="m-0 text-uppercase">{{currentButtonState}}</h5>
+                    
+                    @if (currentSubtext.length > 0) {
+                        <p class="m-0 text-truncate" style="font-size: small;">{{currentSubtext}}</p>
+                    }
+                    
+                    @if (progressBar) {
+                        <div class="progress bg-transparent" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" [style]="{width: progressBarLength, 'background-color': 'white'}">
+                            </div>
+                        </div>
+                    }
+                    
+                </button>
+            </div>
+            <div class="col-auto me-4 d-flex align-items-center gap-3">
+                <button class="btn btn-options border-1" pTooltip="Mi perfil de Xbox"  [disabled]="isLiveAction">
+                    <i class="bi bi-person fs-5"></i>
+                </button>
+                <button class="btn btn-options border-1" pTooltip="Configuración"  [disabled]="isLiveAction">
+                    <i class="bi bi-gear fs-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
