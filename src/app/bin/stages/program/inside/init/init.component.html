@@ -7,7 +7,7 @@
             <img src="imgs/main_gamelogo.png" style="width: auto; height: 12vh; filter: drop-shadow(0 0 0.55rem rgba(0, 0, 0, 0.8));">
         </div>
         <div style="height: 66%;">
-            <div class="d-flex w-100 h-100 flex-column justify-content-end align-items-center">
+            <div class="d-flex w-100 h-100 flex-column justify-content-end align-items-center invisible">
                 @for (item of CURRENT_FILES_DOWNLOAD; track $index) {
                     <p class="m-0 text-white" [style]="{opacity: item.op, 'font-size': 'small'}">Descargando: {{item.name}}</p>
                 }
@@ -33,7 +33,7 @@
                     }
                     
                     @if (progressBar) {
-                        <div class="progress bg-transparent" style="height: 5px;">
+                        <div class="progress" style="height: 5px; background-color: #ffffff75;">
                             <div class="progress-bar" role="progressbar" [style]="{width: progressBarLength, 'background-color': 'white'}">
                             </div>
                         </div>
@@ -42,12 +42,22 @@
                 </button>
             </div>
             <div class="col-auto me-4 d-flex align-items-center gap-3">
-                <button class="btn btn-options border-1" pTooltip="Mi perfil de Xbox"  [disabled]="isLiveAction">
+                <button class="btn btn-options border-1" pTooltip="Mi perfil" (click)="op.toggle($event)" tooltipPosition="left">
                     <i class="bi bi-person fs-5"></i>
                 </button>
-                <button class="btn btn-options border-1" pTooltip="Configuración"  [disabled]="isLiveAction">
+                <button class="btn btn-options border-1" pTooltip="Configuración" (click)="openConfiguration(false)">
                     <i class="bi bi-gear fs-5"></i>
                 </button>
+
+                <p-overlayPanel #op>
+                    <div class="d-flex gap-3 align-items-center w-75">
+                        <img src="https://crafatar.com/avatars/{{this.saved.uuid}}" style="width: auto; height: 64px; border-radius: 5px;">
+                        <div class="row">
+                            <p class="m-0 text-white">Usuario: {{this.saved.username}}</p>
+                            <p class="m-0 text-white">ID: {{this.saved.uuid}}</p>
+                        </div>
+                    </div>
+                </p-overlayPanel>
             </div>
         </div>
     </div>

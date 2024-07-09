@@ -1,0 +1,18 @@
+<div class="d-flex flex-column gap-3 user-select-none">
+    <h6 class="m-0">Establece tu nombre de usuario:</h6>
+    <input type="text" pInputText [(ngModel)]="username"/>
+    <p style="font-size: 12px; text-align: justify; opacity: .5; margin: 0;">Open Launcher permite iniciar Minecraft con funciones limitadas a servicios generales como servidores "premium" (para usuarios con Minecraft comprado), personalización de personaje, Realms, etc.; aun siendo el caso, tienes funciones limitadas con una cuenta offline.</p>
+    <hr class="m-0">
+    <button type="button" class="btn btn-minecraft-a" (click)="createAccountAndClose()" [disabled]="spinnerBtn">
+        @if (!spinnerBtn) {
+            <span>Iniciar sesión</span>
+        }
+        @else {
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+            </div>
+            
+        }
+    </button>
+    
+</div>

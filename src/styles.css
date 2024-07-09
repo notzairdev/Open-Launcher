@@ -1,8 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-@import "../node_modules/primeng/resources/primeng.css";
-@import "../node_modules/primeng/resources/themes/lara-dark-blue/theme.css";
 @import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 @import "../node_modules/bootstrap-icons/font/bootstrap-icons.css";
+@import "../node_modules/primeng/resources/primeng.css";
+@import "../node_modules/primeng/resources/themes/aura-dark-noir/theme.css";
 @import '../node_modules/notyf/notyf.min.css';
 
 @font-face {
@@ -18,7 +18,7 @@ body {
     padding: 0;
     margin: 0;
     height: 100%;
-    background-color: #1f1f1f;
+    background-color: #111111;
 }
 
 ::-webkit-scrollbar {
@@ -26,13 +26,13 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: #1f1f1f;
+    background: #111111;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #3fc2b3;
     border-radius: 20px;
-    border: 3px solid #1f1f1f;
+    border: 3px solid #111111;
 }
 
 /*Fonts*/

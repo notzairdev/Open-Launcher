@@ -1,0 +1,204 @@
+<div class="w-100 h-100 user-select-none">
+    <div class="row">
+        <div class="col-4">
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 0">
+                <i class="bi bi-joystick"></i>
+                Juego
+            </button>
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 1">
+                <img src="imgs/launcher.svg" style="width: auto; height: 19px;">
+                Launcher
+            </button>
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 2">
+                <i class="bi bi-floppy-fill"></i>
+                Instancias
+            </button>
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 3">
+                <i class="bi bi-person-fill"></i>
+                Cuenta
+            </button>
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 4">
+                <i class="bi bi-list-columns-reverse"></i>
+                Ver logs
+            </button>
+            <button type="button" class="btn btn-options-2 mb-2" (click)="CURRENT_TAB = 5">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                Acerca de
+            </button>
+            
+        </div>
+        <div class="col" style="max-width: 410px;">
+            <p-scrollPanel [style]="{ width: '100%', height: '320px', padding: '0' }">
+                <!-- GameConfiguration -->
+                @if (CURRENT_TAB === 0) {
+                    <div>
+                        <p>RAM asignada para Java:</p>
+                        <p-inputNumber min="2048" [disabled]="true" inputId="withoutgrouping" [useGrouping]="false" suffix=" MB" [(ngModel)]="RAM_ASSIGN" />
+                        <p style="font-size: small; opacity: .5;">RAM deshabilitada debido al modo BETA.</p>
+                    </div>
+                }
+                <!-- LauncherConfiguration -->
+                @else if (CURRENT_TAB === 1) {
+                    <div>
+                        <div class="row d-flex align-items-center">
+                            <div class="col">
+                                <span>Minimizar en bandeja cuando se inicie una instancia </span>
+                            </div>
+                            <div class="col-auto">
+                                <p-selectButton [disabled]="isLiveActions" [options]="options" [(ngModel)]="HIDE_LAUNCH" optionLabel="label" optionValue="value" />
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0">Ruta de cache Open Launcher:</p>
+                        <div class="text-truncate w-75">
+                            <a (click)="openWindow(ROUTE_CACHE)" class="text-decoration-none text-white opacity-75 pointer-event" pTooltip="Abrir carpeta" tooltipPosition="top">
+                                <span class="text-truncate">{{ROUTE_CACHE}} </span>
+                            </a>
+                        </div>
+                        <p class="mt-3 mb-0">Ruta de Instancias:</p>
+                        <div class="text-truncate w-75">
+                            <a (click)="openWindow(ROUTE_INSTANCES)" class="text-decoration-none text-white opacity-75 pointer-event" pTooltip="Abrir carpeta" tooltipPosition="top">
+                                <span class="text-truncate">{{ROUTE_INSTANCES}} </span>
+                            </a>
+                        </div>
+                    </div>
+                }
+                <!-- Instances -->
+                @else if (CURRENT_TAB === 2) {
+                    <div class="d-flex flex-column gap-2">
+                        @if(INSTANCES.length > 0){
+                            @for (item of INSTANCES; track $index) {
+                            <div class="ps-3 pb-3">
+                                <div class="row d-flex instance gap-2 align-items-center rounded-3">
+                                    <div class="col-auto">
+                                        <img src="imgs/launcher.svg" style="width: auto; height: 24px;">
+                                    </div>
+                                    <div class="col text-truncate">
+                                        <div class="mb-2">
+                                            <p class="mb-0 mt-2">{{item.name}}</p>
+                                            <p class="m-0 opacity-50 text-truncate">{{item.directory}}</p>
+                                            <p class="mt-0 mb-2 opacity-50 text-truncate">{{convertToTimePlayed(item.timePlayed)}}</p>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="col-auto">
+                                        <button class="btn btn-options-2" [disabled]="isLiveActions">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div> -->
+                                </div>
+                            </div>
+                            }
+                        }
+                        @else {
+                            <div class="text-center text-white-50">
+                                <p>No hay instancias instaladas.</p>
+                            </div>
+                        }
+                    </div>
+                }
+                <!-- Profile -->
+                @else if (CURRENT_TAB === 3) {
+                    <div class="d-flex gap-3 align-items-center w-75">
+                        <img src="https://crafatar.com/avatars/{{UUID}}" style="width: auto; height: 48px; border-radius: 5px;">
+                        <div class="row">
+                            <p class="m-0 text-white">{{NAME}}</p>
+                            <p class="m-0 text-white opacity-50">{{UUID}}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-outline-danger" (click)="deleteSession()" [disabled]="isLiveActions">
+                            Cerrar sesión
+                        </button>
+                    </div>
+                }
+                <!-- Logs -->
+                @else if (CURRENT_TAB === 4) {
+                    <p>Logs: </p>
+                    <div class="d-flex flex-column gap-2">
+                        @for (item of loginfo; track $index) {
+                            @if (item.severity === 'info') {
+                            <div class="d-flex gap-2 text-primary">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                <p>[{{item.date | date: 'dd/MM/yyyy hh:mm:ss'}}]: {{item.message}}</p>
+                            </div>
+                            }
+                            @else if (item.severity === 'warn') {
+                            <div class="d-flex gap-2 text-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <p>[{{item.date | date: 'dd/MM/yyyy hh:mm:ss'}}] - {{item.message}}</p>
+                            </div>
+                            }
+                            @else {
+                            <div class="d-flex gap-2 text-danger">
+                                <i class="bi bi-x-octagon-fill me-1"></i>
+                                <p>[{{item.date | date: 'dd/MM/yyyy hh:mm:ss'}}] - {{item.message}}</p>
+                            </div>
+                            }
+                        }
+                    </div>
+                }
+                <!-- Credits -->
+                @else if (CURRENT_TAB === 5) {
+                    <div class="d-flex flex-column align-items-center text-center">
+                        <img src="imgs/branding.png" style="width: 240px; height: auto;">
+                        <p class="m-0 opacity-50" style="font-size: smaller;">Open Launcher: A Open-Source Minecraft Launcher</p>
+                        <p class="m-0 opacity-50" style="font-size: smaller;">Version Beta build 2024.06.athenas-4</p>
+                        <p class="m-0 opacity-50" style="font-size: smaller;">notzairdev - https://github.com/notzairdev</p>
+                    </div>
+                    
+                    <hr>
+
+                    <p>Dependencias Open-Source usadas: </p>
+                    <ul style="font-size: small; opacity: .7;">
+                        <li>&#64;angular/core (dev: Angular)</li>
+                        <li>&#64;angular/cdk (dev: Angular)</li>
+                        <li>&#64;angular/common (dev: Angular)</li>
+                        <li>&#64;angular/compiler (dev: Angular)</li>
+                        <li>&#64;angular/material (dev: Angular)</li>
+                        <li>&#64;angular/platform-browser (dev: Angular)</li>
+                        <li>&#64;angular/platform-browser-dynamic (dev: Angular)</li>
+                        <li>&#64;angular/router (dev: Angular)</li>
+                        <li>&#64;angular/forms (dev: Angular)</li>
+                        <li>&#64;angular/animations (dev: Angular)</li>
+                        <li>bootstrap (dev: Angular)</li>
+                        <li>bootstrap-icons (dev: Mdo & Fat)</li>
+                        <li>custom-electron-titlebar (dev: AlexTorresDev)</li>
+                        <li>discord-rpc (dev: DiscordJs)</li>
+                        <li>dotenv (dev: Motdotla)</li>
+                        <li>electron (dev: Electron)</li>
+                        <li>electron-builder (dev: Electron-userland)</li>
+                        <li>electron-updater (dev: Electron-userland)</li>
+                        <li>electron-log (dev: Megahertz)</li>
+                        <li>electron-json-storage (dev: Electron-userland)</li>
+                        <li>gmll (dev: Hanro50)</li>
+                        <li>jasmine-core (dev: Jasmine)</li>
+                        <li>karma (dev: Karma-runner)</li>
+                        <li>karma-chrome-launcher (dev: Karma-runner)</li>
+                        <li>karma-coverage (dev: Karma-runner)</li>
+                        <li>karma-jasmine (dev: Karma-runner)</li>
+                        <li>karma-jasmine-html-reporter (dev: Karma-runner)</li>
+                        <li>msmc (dev: Hanro50)</li>
+                        <!-- <li>minecraft-launcher-core</li> -->
+                        <li>notyf (dev: Caroso1222)</li>
+                        <li>ngx-ui-loader (dev: T-ho)</li>
+                        <li>primeng (dev: Primefaces)</li>
+                        <li>rxjs (dev: Reactivex)</li>
+                        <li>tslib (dev: Microsoft)</li>
+                        <li>typescript (dev: Microsoft)</li>
+                        <li>uuid (dev: Uuidjs)</li>
+                        <li>zone.js (dev: Angular)</li>
+                    </ul>
+
+                    <p>Dependencias privadas usadas: </p>
+                    <ul style="font-size: small; opacity: .7;">
+                        <li>&#64;aurora/core (dev: Aurora Studios)</li>
+                        <li>&#64;aurora/logs (dev: Aurora Studios)</li>
+                        <li>&#64;aurora/animations (dev: Aurora Studios)</li>
+                        <li>&#64;aurora/ipc (dev: Aurora Studios)</li>
+                        <li>&#64;aurora/bootstraper (dev: Aurora Studios)</li>
+                    </ul>
+                }
+            </p-scrollPanel>
+        </div>
+    </div>
+</div>

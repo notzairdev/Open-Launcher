@@ -1,0 +1,46 @@
+@if (STATEMENT === 0) {
+    <div class="user-select-none">
+        <p>La nueva actualización {{data.tag}} de Open Launcher ha sido lanzada.</p>
+        <p class="small">Changelog de la versión:</p>
+        <!-- <hr> -->
+        <div [innerHTML]="data.releaseNotes">
+    
+        </div>
+        <hr>
+        <p class="opacity-50" style="font-size: small;">Las actualizaciones para Open Launcher son obligatorias debido a que ayudan y mantienen la estabilidad y seguridad del launcher. En caso de omitir la instalación el launcher se cerrará.</p>
+        <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-dark" (click)="download()">Descargar</button>
+            <button class="btn btn-dark-2" (click)="cancel()">Cancelar</button>
+        </div>
+    </div>
+}
+@else if (STATEMENT === 1){
+    <div class="user-select-none">
+        <p>{{STATE_TEXT}}</p>
+        <div class="progress" style="height: 5px; background-color: #27272a;">
+            <div class="progress-bar" role="progressbar" [style]="{width: progressBarLength + '%', 'background-color': 'white'}">
+            </div>
+        </div>
+        
+        <div class="row mt-4 opacity-50">
+            <div class="col-auto">
+                <p>{{percent}}%</p>
+            </div>
+            <div class="col text-end">
+                <p>{{speed}}KB/s</p>
+            </div>
+        </div>
+
+        <p class="opacity-50" style="font-size: small;">Las actualizaciones son necesarias para mantener la seguridad y estabilidad de Open Launcher, intente no cerrar la aplicación mientras descarga.</p>
+        
+        <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-dark" [disabled]="!isReadyToInstall" (click)="install()">Cerrar e instalar</button>
+        </div>
+    </div>
+}
+@else {
+    <div class="user-select-none">
+        <p>Open Launcher se reiniciará...</p>
+    </div>
+}
+

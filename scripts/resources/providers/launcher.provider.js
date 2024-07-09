@@ -1,5 +1,5 @@
-const { Auth, Xbox } = require('msmc')
-const { modifyConfiguration, readConfiguration } = require('./storage.provider')
+const { Auth } = require('msmc')
+const { modifyConfiguration, readConfiguration } = require('./storage.provider');
 
 async function getXboxAuth() {
     return new Promise(async (resolve) => {
@@ -13,7 +13,7 @@ async function getXboxAuth() {
                 throw new Error("Failed to get Minecraft token");
             }
             
-            const currentPacket = await readConfiguration();
+            const currentPacket = JSON.parse(await readConfiguration());
 
             if (!currentPacket) {
                 throw new Error("Failed to read configuration");
@@ -40,31 +40,99 @@ async function getXboxAuth() {
 
 function refreshMinecraftToken(){
     return new Promise(async (resolve) => {
-        const configurationJson = await readConfiguration();
+        const configurationJson = JSON.parse(await readConfiguration());
         const data = configurationJson.account.data;
-        const token = data.parent.msToken.refresh_token;
+        
+        if(!data.openlauncher){
+            const token = data.parent.msToken.refresh_token;
 
-        try{
-            const authManager = new Auth('login').refresh(token);
-            const xbxManager = (await authManager).validate();
-            
-            if(xbxManager == true){
-                const tokenObject = (await authManager).getMinecraft();
-                resolve(tokenObject);
+            try {
+                const authManager = new Auth('login').refresh(token);
+                const xbxManager = (await authManager).validate();
+
+                if (xbxManager == true) {
+                    const tokenObject = await (await authManager).getMinecraft();
+                    resolve(tokenObject.gmll());
+                }
+                else {
+                    resolve(false);
+                }
             }
-            else{
-                resolve(false);
+            catch (e) {
+                resolve(null);
             }
         }
-        catch(e){
-            console.log(e);
-            resolve(null);
+        else{
+            resolve(data.openlauncher.username);            
         }
-
     })
+}
+
+function createOfflineAuth(name){
+    return new Promise(async (resolve) => {
+        try{
+            const currentPacket = JSON.parse(await readConfiguration());
+            currentPacket.account.active = true;
+            currentPacket.account.data = {
+                openlauncher: {
+                    username: name
+                }
+            }
+
+            const _isEditable = await modifyConfiguration(currentPacket);
+
+            if (!_isEditable) {
+                throw new Error("Failed to modify configuration");
+            }
+
+            resolve([{ isCancelled: false, account: token }]);
+        }
+        catch {
+            resolve([{isCancelled: true}]);
+        }
+    })
+
+}
+
+function isOnlineSession(){
+    return new Promise(async (resolve) => {
+        try{
+            // const data = await fetch('https://http.cat/200')
+            // if(data.status !== 200){
+            //     resolve(false)
+            // }
+            // else{
+            //     resolve(true)
+            // }
+            resolve(false)
+        }
+        catch{
+            resolve(false)
+        }
+    })
+}
+
+function deleteCurrentSession(){
+    return new Promise(async (resolve) => {
+        const currentPacket = JSON.parse(await readConfiguration());
+        currentPacket.account.active = false;
+        currentPacket.account.data = null;
+
+        const _isEditable = await modifyConfiguration(currentPacket);
+
+        if (!_isEditable) {
+            throw new Error("Failed to modify configuration");
+        }
+
+        resolve(true);
+    })
+
 }
 
 module.exports = {
     getXboxAuth,
-    refreshMinecraftToken
+    refreshMinecraftToken,
+    createOfflineAuth,
+    deleteCurrentSession,
+    isOnlineSession
 }

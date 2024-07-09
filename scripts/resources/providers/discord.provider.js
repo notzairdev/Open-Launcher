@@ -58,6 +58,8 @@ function onChange(newActivity, option){
                 reject('RPC change error: Discord RPC is not initialized.');
             }
 
+            const startTimestamp = new Date();
+
             if (option == 0) {
                 // rich.setActivity({
                 //     details: newActivity[0],
@@ -70,7 +72,7 @@ function onChange(newActivity, option){
                     details: newActivity[0],
                     largeImageKey: 'launchericon',
                     largeImageText: 'Open Launcher',
-                    startTimestamp,
+                    startTimestamp: startTimestamp,
                     instance: false
                 })
             }
@@ -86,7 +88,7 @@ function onChange(newActivity, option){
                 // });
                 discord.updatePresence({
                     details: newActivity[0],
-                    startTimestamp,
+                    startTimestamp: startTimestamp,
                     largeImageKey: 'minecraft',
                     largeImageText: 'Minecraft ' + newActivity[1],
                     smallImageKey: 'launchericon',

@@ -25,14 +25,14 @@
 .btn-options {
     background-color: transparent;
     color: white;
-    border-color: white;
-    box-shadow: rgba(255, 255, 255, 0.4) 0px 2px 8px 0px;
+    border: 0;
+    /* box-shadow: rgba(255, 255, 255, 0.4) 0px 2px 8px 0px; */
 }
 
 .btn-options:hover {
-    background-color: transparent;
-    color: white;
-    box-shadow: rgba(255, 255, 255, 0.7) 0px 2px 8px 0px;
+    background-color: white;
+    color: black;
+    /* box-shadow: rgba(255, 255, 255, 0.7) 0px 2px 8px 0px; */
 }
 
 .btn-grad {

@@ -1,21 +1,18 @@
-const { app, ipcMain, BrowserWindow, Menu, globalShortcut } = require("electron");
+const { app, ipcMain, BrowserWindow, Menu, globalShortcut, shell, nativeImage, Tray } = require("electron");
 const { setupTitlebar, attachTitlebarToWindow } = require('custom-electron-titlebar/main')
 
 const path = require("path");
-
-//AutoUpdater
-const { autoUpdater, AppUpdater } = require("electron-updater");
-autoUpdater.autoDownload = false;
-autoUpdater.autoInstallOnAppQuit = false;
 
 //Dotenv
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 //Providers
-const { getXboxAuth } = require('./resources/providers/launcher.provider')
-const { createConfiguration, readConfiguration, readManifestVersion } = require('./resources/providers/storage.provider')
-const { closeConnection, onChange, createRPC } = require('./resources/providers/discord.provider')
-const { listManifest, downloadAndInstall, executeInstance } = require('./resources/providers/versions.provider')
+const { getXboxAuth, createOfflineAuth, isOnlineSession, deleteCurrentSession } = require('./resources/providers/launcher.provider')
+const { createConfiguration, readConfiguration, readManifestVersion, readLaunchManifest, isNew, verifyConfiguration } = require('./resources/providers/storage.provider')
+// const { closeConnection, onChange, createRPC } = require('./resources/providers/discord.provider')
+const { listManifest, downloadAndInstall, executeInstance, saveNewVersion } = require('./resources/providers/versions.provider')
+const { checkNewUpdates } = require('./resources/providers/updates.provider')
+const { saveTimePlayed } = require('./resources/providers/timestamp.provider')
 
 let appWin = null;
 
@@ -26,7 +23,7 @@ createWindow = () => {
         width: 1300,
         height: 650,
         frame: false,
-        title: 'Open Launcher',
+        title: 'Open Launcher (BETA)',
         // titleBarOverlay: true,
         resizable: false,
         maximizable: false,
@@ -47,7 +44,7 @@ createWindow = () => {
     attachTitlebarToWindow(appWin)
 
     globalShortcut.register('CommandOrControl+Shift+I', () => {
-        appWin.webContents.openDevTools();
+        appWin.webContents.openDevTools()
     });
 
     appWin.on("closed", () => {
@@ -56,13 +53,24 @@ createWindow = () => {
 }
 
 app.on("ready", () => {
-    createConfiguration();
     createWindow();
+    
+    let icon = nativeImage.createFromPath(path.resolve(__dirname, 'resources/icon', 'icon_app_2.png'));
+    icon.resize({ width: 16, height: 16 });
+    tray = new Tray(icon);
+
+    tray.setToolTip('Open Launcher (BETA)');
+
+    tray.on('click', () => {
+        if(!appWin.isVisible()){
+            appWin.show();
+        }
+    })
 });
 
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
-        closeConnection();
+        // closeConnection();
 
         app.quit();
         process.exit(1);
@@ -83,64 +91,83 @@ const exampleMenuTemplate = [
     }
 ]
 
-//AutoUpdater
-autoUpdater.on("update-available", (info) => {
-    ipcMain.emit("update:available", {
-        available: true,
-        information: info
-    });
-})
+ipcMain.on("configuration:new", async (event, args) => {
+    const _result = await isNew();
 
-autoUpdater.on("update-not-available", (info) => {
-    ipcMain.emit("update:available", {
-        available: false,
-        information: info
-    });
+    event.reply("configuration:new:reply", { result: _result })
 });
 
-autoUpdater.on("update-downloaded", (progress) => {
-    ipcMain.emit("update:downloaded", {
-        downloaded: true,
-        progress: progress
-    });
+ipcMain.on("configuration:create", async (event, args) => {
+    try{
+        await createConfiguration(app.getVersion());
+
+        event.reply("configuration:create:reply", { success: true });
+    }
+    catch{
+        event.reply("configuration:create:reply", { success: false });
+    }
+});
+
+ipcMain.on("configuration:directory", async (event, args) => {
+    try{
+        await verifyConfiguration();
+        event.reply("configuration:directory:reply", { success: true });
+    }
+    catch{
+        event.reply("configuration:directory:reply", { success: false });
+    }
 });
 
 ipcMain.on("configuration:verify", async (event) => {
     const data = await readConfiguration();
-    event.reply("configuration:reply", data);
+    const versions = await readManifestVersion();
+    event.reply("configuration:reply", { data: JSON.parse(data), versions: JSON.parse(versions) });
 })
 
-ipcMain.on("configuration:updates", (event) => {
-    autoUpdater.checkForUpdates();
-});
+ipcMain.on("configuration:online", async (event) => {
+    const _result = await isOnlineSession();
 
-ipcMain.on("minecraft:versions", async (event) => {
-    const returnable = await listManifest();
+    event.reply("configuration:online:reply", { result: _result })
+})
 
-    if(returnable == null){
-        event.reply("minecraft:versions:reply", { error: true });
-    }
-    else{
-        event.reply("minecraft:versions:reply", returnable);
-    }
-});
-
-ipcMain.on("minecraft:manifest", async (event) => {
-    const returnable = await readManifestVersion();
-    
-    event.reply("minecraft:manifest:reply", returnable);
-});
-
-ipcMain.on("minecraft:install", async (event, args) => {
+ipcMain.on("configuration:launch", async (event) => {
     try{
-        await downloadAndInstall(args, (progress) => {
-            event.reply("minecraft:install:progress", progress);
+        const results = await readLaunchManifest();
+
+        event.reply("configuration:launch:reply", { success: true, data: results });
+    }
+    catch{
+        event.reply("configuration:launch:reply", { success: false });
+    }
+})
+
+ipcMain.on("common:close-app", () => {
+    // closeConnection();
+    app.quit();
+    process.exit(1);
+})
+
+ipcMain.on("common:openWindow", (event, args) => {
+    shell.openPath(args.url);
+})
+
+ipcMain.on("common:restart", () => {
+    app.relaunch();
+    app.quit();
+    process.exit(1);
+})
+
+ipcMain.on("configuration:updates", async (event, args) => {
+   try{
+        await checkNewUpdates(args, (returnable) => {
+            event.reply("configuration:updates:reply", returnable);   
         });
 
-        event.reply("minecraft:install:reply", { success: true });
-    } catch (error){
-        event.reply("minecraft:install:reply", { success: false, error: error });
-    }
+        // event.reply("configuration:updates:reply", { success: true });
+   }
+   catch{
+        event.reply("configuration:updates:reply", { success: false });
+   }
 });
 
 ipcMain.once("discord:init", async (event) => {
@@ -166,10 +193,7 @@ ipcMain.on("discord:change", async (event, args) => {
     }
 })
 
-ipcMain.on("auth:microsoft", async (event, args) => {
-    // console.log(args)
-    
-    // createMicrosoftPopup();
+ipcMain.on("auth:microsoft", async (event) => {
     const microsoftResponse = await getXboxAuth();
 
     if(microsoftResponse[0].isCancelled == true){
@@ -180,17 +204,78 @@ ipcMain.on("auth:microsoft", async (event, args) => {
     }
 });
 
+ipcMain.on("auth:delete", async (event) => {
+    try{
+        await deleteCurrentSession();
+        event.reply("auth:delete:reply", { success: true });
+    }
+    catch{
+        event.reply("auth:delete:reply", { success: false });
+    }
+});
+
+ipcMain.on("auth:offline", async (event, args) => {
+    try{
+        await createOfflineAuth(args.username);
+
+        event.reply("auth:offline:reply", { success: true });
+    }
+    catch{
+        event.reply("auth:offline:reply", { success: false });
+    }
+});
+
+ipcMain.on("minecraft:versions", async (event) => {
+    const returnable = await listManifest();
+
+    if (returnable == null) {
+        event.reply("minecraft:versions:reply", { error: true });
+    }
+    else {
+        event.reply("minecraft:versions:reply", returnable);
+    }
+});
+
+ipcMain.on("minecraft:manifest", async (event) => {
+    const returnable = await readManifestVersion();
+
+    event.reply("minecraft:manifest:reply", returnable);
+});
+
+ipcMain.on("minecraft:new", async (event, args) => {
+    try{
+        await saveNewVersion(args);
+        event.reply("minecraft:new:reply", { success: true });
+    }
+    catch{
+        event.reply("minecraft:new:reply", { success: false });
+    }
+});
+
+ipcMain.on("minecraft:install", async (event, args) => {
+    try {
+        await downloadAndInstall(args, (progress) => {
+            event.reply("minecraft:install:progress", progress);
+        });
+
+        event.reply("minecraft:install:reply", { success: true });
+    } catch (error) {
+        event.reply("minecraft:install:reply", { success: false, error: error });
+    }
+});
+
 ipcMain.on("minecraft:run", async (event, args) => {
     try{
         await executeInstance(args.version, (progress) => {
             // console.log(progress.code)
             if (progress.code === 'LAUNCHER_JVM_START'){
-                appWin.minimize();
+                // appWin.minimize();
+                appWin.hide();
             }
 
-            if (progress.code === 'LAUNCHER_JVM_STDOUT' && progress.chunk.includes('Stopping!')){
-                appWin.restore();
-            }
+            // if (progress.code === 'LAUNCHER_JVM_STDOUT' && progress.chunk.includes('Stopping!')){
+            //     appWin.restore();
+            // }
             
             event.reply("minecraft:run:progress", progress);
         });
@@ -199,5 +284,15 @@ ipcMain.on("minecraft:run", async (event, args) => {
     } 
     catch (error){
         event.reply("minecraft:run:reply", { success: false, error: error });
+    }
+});
+
+ipcMain.on("minecraft:time", async (event, args) => {
+    try{
+        await saveTimePlayed(args.version, args.date);
+        event.reply("minecraft:time:reply", { success: true });
+    }
+    catch{
+        event.reply("minecraft:time:reply", { success: false });
     }
 });
