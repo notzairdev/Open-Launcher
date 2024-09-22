@@ -97,14 +97,14 @@ function createOfflineAuth(name){
 function isOnlineSession(){
     return new Promise(async (resolve) => {
         try{
-            // const data = await fetch('https://http.cat/200')
-            // if(data.status !== 200){
-            //     resolve(false)
-            // }
-            // else{
-            //     resolve(true)
-            // }
-            resolve(false)
+            const data = await fetch('https://http.cat/200')
+            if(data.status !== 200){
+                resolve(false)
+            }
+            else{
+                resolve(true)
+            }
+            // resolve(false)
         }
         catch{
             resolve(false)

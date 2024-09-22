@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { IpcService } from '../../../../shared/services/electron/ipc.service';
-import { FileManager } from '../../../../shared/providers/styles.provider';
-import { NgxUiLoaderService } from 'ngx-ui-loader';
-import { Notyf } from 'notyf';
+import { OptionsComponent } from '../../../modals/options/options.component';
+import { BetaComponent } from '../../../modals/beta/beta.component';
+import { DataService } from '../../../../shared/services/managers/data.service';
+import { LoggerService } from '../../../../shared/services/managers/logger.service';
+import { SessionConfig } from '../../../../shared/providers/user.provider';
 import { TooltipModule } from 'primeng/tooltip'
 import { ProgressBarModule } from 'primeng/progressbar'
 import { DialogService, DynamicDialogModule, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { DataService } from '../../../../shared/services/managers/data.service';
-import { OptionsComponent } from '../../../modals/options/options.component';
-import { LoggerService } from '../../../../shared/services/managers/logger.service';
-import { SessionConfig } from '../../../../shared/providers/user.provider';
-import { BetaComponent } from '../../../modals/beta/beta.component';
+import { NgxUiLoaderService } from 'ngx-ui-loader';
+import { Notyf } from 'notyf';
 
 @Component({
   selector: 'app-init',
@@ -20,7 +20,20 @@ import { BetaComponent } from '../../../modals/beta/beta.component';
   imports: [FormsModule, DynamicDialogModule, TooltipModule, ProgressBarModule, OverlayPanelModule],
   templateUrl: './init.component.html',
   styleUrl: './init.component.css',
-  providers: [DialogService]
+  providers: [DialogService],
+  animations: [
+    trigger('displayObjects', [
+      state('true', style({
+        opacity: 1,
+      })),
+      state('false', style({
+        opacity: 0,
+      })),
+      transition('true => false', animate('500ms ease-out')),
+      transition('false => true', animate('500ms ease'))
+
+    ]),
+  ]
 })
 
 export class InitComponent implements OnInit{
@@ -28,9 +41,17 @@ export class InitComponent implements OnInit{
   private ref: DynamicDialogRef | undefined;
   private ref2: DynamicDialogRef | undefined;
 
+  protected currentInstance: number = 0;
+
   protected minecraftManifest: any;
   protected saved: any;
   
+  protected isAnyAd: boolean = false;
+  protected adContent: string = '';
+
+  protected isReady: boolean = false;
+
+  protected versionText: string = 'Esperando...';
   protected currentButtonState: string = 'Leyendo datos...'
   protected isInstalledVersion: boolean = false;
   protected currentSubtext: string = ''
@@ -89,6 +110,8 @@ export class InitComponent implements OnInit{
 
       this._logger.log({ date: new Date(), severity: 'info', message: 'launchermeta.mojang.com is returned correct json.' })
 
+      this.isReady = true;
+
       this.comprobateIsInstalledVersion();
     });
   }
@@ -96,6 +119,8 @@ export class InitComponent implements OnInit{
   private readManifestVersions(): void{
     this._logger.log({ date: new Date(), severity: 'info', message: 'Reading manifest.json. Sending minecraft:manifest event, waiting for reply' })
     
+    this.versionText = "Selecciona una versión:"
+
     this._ipc.send('minecraft:manifest');
     this._ipc.once('minecraft:manifest:reply', (event, data) => {
       this.manifest = JSON.parse(data);
@@ -202,10 +227,10 @@ export class InitComponent implements OnInit{
             this._logger.log({ date: new Date(), severity: 'info', message: 'Downloading file: ' + data.file + ' ('+ data.index + ' of ' + data.totalfiles + ')'})
 
             if(currentTick === 0){
-              this.currentSubtext = 'Descargando Minecraft Assets...';
+              this.currentSubtext = 'Descargando Assets (' + this.progressBarLength.slice(0,4) + '%)...';
             }
             else if (currentTick === 1){
-              this.currentSubtext = 'Descargando Minecraft Libs...';
+              this.currentSubtext = 'Descargando Libs (' + this.progressBarLength.slice(0, 4) + '%)...';
             }
             else{
               this.currentSubtext = 'Descargando Open Launcher JVM...';
@@ -255,16 +280,18 @@ export class InitComponent implements OnInit{
 
       this._logger.log({ date: new Date(), severity: 'info', message: 'Running Minecraft version: ' + this.selectedVersion })
 
-      // this.updateCurrentRPC(['Jugando a Minecraft ' + this.selectedVersion, this.selectedVersion], 1);
       this._ipc.send('minecraft:run', {version: this.selectedVersion});
 
       this._ipc.on('minecraft:run:progress', (event, data) => {
         if(data.code === 'LAUNCHER_STARTING'){
-          // console.log(data)
           this.currentSubtext = 'Cargando Open Launcher JVM...';
           this._logger.log({ date: new Date(), severity: 'warn', message: 'Loading Open-Launcher JVM...' })
         }
         else if (data.code === 'LAUNCHER_JVM_START'){
+          this.updateCurrentRPC(['Jugando a Minecraft ' + this.selectedVersion, this.selectedVersion], 1);
+
+          this.autoPauseResumeVideo(0);
+
           this.currentSubtext = 'Iniciando Minecraft...';
           this._logger.log({ date: new Date(), severity: 'warn', message: 'Starting JVM with Minecraft...' })
           this.openConfiguration(true);
@@ -277,11 +304,16 @@ export class InitComponent implements OnInit{
           notyf.error('Error: ' + data.type + '. Reinicie el launcher o intente nuevamente.')
         }
 
-        // console.log(data)
-
         if(data.chunk){
           this._logger.log({ date: new Date(), severity: 'info', message: 'Chunk JVM: ' + data.chunk })
           if (data.chunk.includes('Stopping!')) {
+            this.ref?.close();
+            this.autoPauseResumeVideo(1);
+            
+            if(this.config?.isDiscordAvailable){
+              this.updateCurrentRPC(['Esperando en el menu...'], 0);
+            }
+
             this._ipc.send('minecraft:time', { date: date, version: this.selectedVersion })
 
             date = null;
@@ -306,8 +338,9 @@ export class InitComponent implements OnInit{
   }
 
   private updateCurrentRPC(args: string[], option: number): void{
-    this._ipc.send('discord:change', { status: args, option: option});
     this._logger.log({ date: new Date(), severity: 'info', message: 'Updating Discord RPC. Sending discord:change event, waiting reply...' })
+    
+    this._ipc.send('discord:change', { status: args, option: option});
     this._ipc.once('discord:change:reply', (event, data) => {
       if(data.success === false){
         const notyf = new Notyf({
@@ -372,6 +405,22 @@ export class InitComponent implements OnInit{
     })
   }
 
+  private autoPauseResumeVideo(_action: number): void{
+    let videoDoc = document.getElementById('video') as HTMLVideoElement;
+
+    if(videoDoc){
+      if (_action === 0) {
+        videoDoc.pause();
+      }
+      else{
+        videoDoc.play();
+      }
+    }
+    else{
+      return;
+    }
+  }
+
   async ngOnInit(): Promise<void> {
     this.readDataService();
     
@@ -381,12 +430,18 @@ export class InitComponent implements OnInit{
       this.callNewManifest();
 
       this.readManifestVersions();
+      
+      if(this.config?.isDiscordAvailable){
+        this.updateCurrentRPC(['Esperando en el menu...'], 0);
+      }
     }
     else{
-
+      this.versionText = "Versiones instaladas:"
+      this.isAnyAd = true;
+      this.adContent = "Modo sin conexión. Las descargas, presencia de Discord y cuenta Microsoft están deshabilitados."
     }
 
     this.openBetaDialog()
-    // this.updateCurrentRPC(['Esperando en el menu...'], 0)
+    
   }
 }

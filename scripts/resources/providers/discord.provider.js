@@ -1,49 +1,41 @@
-// const DiscordRPC = require('discord-rpc')
+const DiscordRPC = require('discord-rpc')
 require('dotenv').config({path: '../../.env'});
 
 const clientID = process.env.DISCORD_CLIENT;
 
-const discord = require('discord-rich-presence')(clientID);
-
-// let rich;
+DiscordRPC.register(clientID);
+let rich;
 
 function setActivity(){
-    if (!discord) {
+    if (!rich) {
         return false;
     }
 
-    const startTimestamp = new Date();
-
-    // rich.setActivity({
-    //     details: 'Iniciando launcher...',
-    //     largeImageKey: 'launchericon',
-    //     largeImageText: 'Open Launcher',
-    //     startTimestamp,
-    //     instance: false
-    // });
-
-    discord.updatePresence({
+    rich.setActivity({
         details: 'Iniciando launcher...',
         largeImageKey: 'icon',
-        largeImageText: 'Open Launcher',
-        startTimestamp,
+        largeImageText: 'Open Launcher (BETA)',
         instance: false
-    })
-
-    return true;
+    });
 }
 
-function createRPC(){
+function initialize(){
     return new Promise((resolve, reject) => {
         try{
-            discord.updatePresence({
-                details: 'Iniciando launcher...',
-                largeImageKey: 'icon',
-                startTimestamp: startTimestamp,
-                instance: false
+            rich = new DiscordRPC.Client({ transport: 'ipc' });
+
+            rich.on('ready', () => {
+                console.log('Discord RPC is ready');
             })
 
-            resolve(true);
+            rich.login({ clientId: clientID }).then(() => {
+                setActivity();
+
+                resolve(true);
+            }).catch((e) => {
+                reject('RPC error: ' + e);
+            });
+
         }
         catch (e){
             reject('RPC error: ' + e);
@@ -54,47 +46,30 @@ function createRPC(){
 function onChange(newActivity, option){
     return new Promise((resolve, reject) => {
         try {
-            if (!discord) {
+            if (!rich) {
                 reject('RPC change error: Discord RPC is not initialized.');
             }
 
             const startTimestamp = new Date();
 
             if (option == 0) {
-                // rich.setActivity({
-                //     details: newActivity[0],
-                //     largeImageKey: 'launchericon',
-                //     largeImageText: 'Open Launcher',
-                //     startTimestamp,
-                //     instance: false
-                // });
-                discord.updatePresence({
+                rich.setActivity({
                     details: newActivity[0],
-                    largeImageKey: 'launchericon',
-                    largeImageText: 'Open Launcher',
-                    startTimestamp: startTimestamp,
+                    largeImageKey: 'icon',
+                    largeImageText: 'Open Launcher (BETA)',
                     instance: false
-                })
+                });
             }
             else if (option == 1) {
-                // rich.setActivity({
-                //     details: newActivity[0],
-                //     startTimestamp,
-                //     largeImageKey: 'minecraft',
-                //     largeImageText: 'Minecraft ' + newActivity[1],
-                //     smallImageKey: 'launchericon',
-                //     smallImageText: 'Open Launcher',
-                //     instance: false
-                // });
-                discord.updatePresence({
+                rich.setActivity({
                     details: newActivity[0],
-                    startTimestamp: startTimestamp,
+                    startTimestamp,
                     largeImageKey: 'minecraft',
                     largeImageText: 'Minecraft ' + newActivity[1],
-                    smallImageKey: 'launchericon',
-                    smallImageText: 'Open Launcher',
+                    smallImageKey: 'icon',
+                    smallImageText: 'Open Launcher (BETA)',
                     instance: false
-                })
+                });
             }
             else {
                 reject('Is not a available option...');
@@ -108,14 +83,28 @@ function onChange(newActivity, option){
     })
 }
 
-function closeConnection(){
-    if(discord){
-        discord.disconnect();
-    }
+function destroy(){
+    return new Promise((resolve, reject) => {
+        try {
+            if (rich) {
+                rich.destroy().then(() => {
+                    resolve(true);
+                }).catch((e) => {
+                    reject('RPC destroy error: ' + e);
+                });
+            }
+            else{
+                resolve(true);
+            }
+        }
+        catch (e) {
+            reject('RPC destroy error: ' + e);
+        }
+    });
 }
 
 module.exports = {
-    createRPC,
-    closeConnection,
+    initialize,
+    destroy,
     onChange
 };

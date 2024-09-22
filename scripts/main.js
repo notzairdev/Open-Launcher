@@ -8,11 +8,13 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 //Providers
 const { getXboxAuth, createOfflineAuth, isOnlineSession, deleteCurrentSession } = require('./resources/providers/launcher.provider')
-const { createConfiguration, readConfiguration, readManifestVersion, readLaunchManifest, isNew, verifyConfiguration } = require('./resources/providers/storage.provider')
-// const { closeConnection, onChange, createRPC } = require('./resources/providers/discord.provider')
+const { createConfiguration, readConfiguration, readManifestVersion, readLaunchManifest, isNew, verifyConfiguration, writeLastPlayed } = require('./resources/providers/storage.provider')
 const { listManifest, downloadAndInstall, executeInstance, saveNewVersion } = require('./resources/providers/versions.provider')
 const { checkNewUpdates } = require('./resources/providers/updates.provider')
-const { saveTimePlayed } = require('./resources/providers/timestamp.provider')
+const { saveTimePlayed } = require('./resources/providers/timestamp.provider');
+const { initialize, destroy, onChange } = require("./resources/providers/discord.provider");
+const { getEnvVersions } = require("./resources/providers/common.provider");
+const { watchDiscord } = require("./resources/providers/watch.provider");
 
 let appWin = null;
 
@@ -71,7 +73,7 @@ app.on("ready", () => {
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         // closeConnection();
-
+        destroy();
         app.quit();
         process.exit(1);
     }
@@ -141,8 +143,26 @@ ipcMain.on("configuration:launch", async (event) => {
     }
 })
 
-ipcMain.on("common:close-app", () => {
-    // closeConnection();
+ipcMain.on("configuration:updates", async (event, args) => {
+    try {
+        await checkNewUpdates(args, (returnable) => {
+            event.reply("configuration:updates:reply", returnable);
+        });
+
+        // event.reply("configuration:updates:reply", { success: true });
+    }
+    catch {
+        event.reply("configuration:updates:reply", { success: false });
+    }
+});
+
+ipcMain.on("common:versions", async (event) => {
+    const returnable = await getEnvVersions();
+    event.reply("common:versions:reply", returnable);
+})
+
+ipcMain.on("common:close-app", async () => {
+    await destroy();
     app.quit();
     process.exit(1);
 })
@@ -157,24 +177,20 @@ ipcMain.on("common:restart", () => {
     process.exit(1);
 })
 
-ipcMain.on("configuration:updates", async (event, args) => {
-   try{
-        await checkNewUpdates(args, (returnable) => {
-            event.reply("configuration:updates:reply", returnable);   
-        });
-
-        // event.reply("configuration:updates:reply", { success: true });
-   }
-   catch{
-        event.reply("configuration:updates:reply", { success: false });
-   }
-});
-
-ipcMain.once("discord:init", async (event) => {
+ipcMain.once("discord:init", (event) => {
     try{
-        await createRPC();
-
-        event.reply("discord:init:reply", { success: true });
+        watchDiscord(async (isRunning) => {
+            if(isRunning){
+                await initialize().then(() => {
+                    event.reply("discord:init:reply", { success: true });
+                }).catch((e) => {
+                    throw new Error(e);
+                });
+            }
+            else{
+                event.reply("discord:init:reply", { success: false });
+            }
+        });
     }
     catch{
         event.reply("discord:init:reply", { success: false });
@@ -184,9 +200,10 @@ ipcMain.once("discord:init", async (event) => {
 ipcMain.on("discord:change", async (event, args) => {
     // console.log(args)
     try{
-        await onChange(args.status, args.option);
+        await onChange(args.status, args.option).then(() => {
+            event.reply("discord:change:reply", { success: true });
+        }).catch((e) => { throw new Error(e) });
 
-        event.reply("discord:change:reply", { success: true });
     }
     catch{
         event.reply("discord:change:reply", { success: false });
@@ -266,16 +283,17 @@ ipcMain.on("minecraft:install", async (event, args) => {
 
 ipcMain.on("minecraft:run", async (event, args) => {
     try{
-        await executeInstance(args.version, (progress) => {
+        await executeInstance(args.version, async (progress) => {
             // console.log(progress.code)
             if (progress.code === 'LAUNCHER_JVM_START'){
                 // appWin.minimize();
                 appWin.hide();
             }
 
-            // if (progress.code === 'LAUNCHER_JVM_STDOUT' && progress.chunk.includes('Stopping!')){
+            if (progress.code === 'LAUNCHER_JVM_STDOUT' && progress.chunk.includes('Stopping!')){
             //     appWin.restore();
-            // }
+                await writeLastPlayed(args.version)
+            }
             
             event.reply("minecraft:run:progress", progress);
         });

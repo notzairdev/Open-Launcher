@@ -114,7 +114,7 @@
                 <!-- Logs -->
                 @else if (CURRENT_TAB === 4) {
                     <p>Logs: </p>
-                    <div class="d-flex flex-column gap-2">
+                    <div class="d-flex flex-column gap-2" style="text-align: justify;">
                         @for (item of loginfo; track $index) {
                             @if (item.severity === 'info') {
                             <div class="d-flex gap-2 text-primary">
@@ -142,61 +142,94 @@
                     <div class="d-flex flex-column align-items-center text-center">
                         <img src="imgs/branding.png" style="width: 240px; height: auto;">
                         <p class="m-0 opacity-50" style="font-size: smaller;">Open Launcher: A Open-Source Minecraft Launcher</p>
-                        <p class="m-0 opacity-50" style="font-size: smaller;">Version Beta build 2024.06.athenas-4</p>
+                        <p class="m-0 opacity-50" style="font-size: smaller;">Version Beta build 2024.08.milly-2</p>
                         <p class="m-0 opacity-50" style="font-size: smaller;">notzairdev - https://github.com/notzairdev</p>
                     </div>
                     
                     <hr>
 
-                    <p>Dependencias Open-Source usadas: </p>
+                    <p>Dependencias Open-Source: </p>
                     <ul style="font-size: small; opacity: .7;">
-                        <li>&#64;angular/core (dev: Angular)</li>
-                        <li>&#64;angular/cdk (dev: Angular)</li>
-                        <li>&#64;angular/common (dev: Angular)</li>
-                        <li>&#64;angular/compiler (dev: Angular)</li>
-                        <li>&#64;angular/material (dev: Angular)</li>
-                        <li>&#64;angular/platform-browser (dev: Angular)</li>
-                        <li>&#64;angular/platform-browser-dynamic (dev: Angular)</li>
-                        <li>&#64;angular/router (dev: Angular)</li>
-                        <li>&#64;angular/forms (dev: Angular)</li>
-                        <li>&#64;angular/animations (dev: Angular)</li>
-                        <li>bootstrap (dev: Angular)</li>
-                        <li>bootstrap-icons (dev: Mdo & Fat)</li>
-                        <li>custom-electron-titlebar (dev: AlexTorresDev)</li>
-                        <li>discord-rpc (dev: DiscordJs)</li>
-                        <li>dotenv (dev: Motdotla)</li>
-                        <li>electron (dev: Electron)</li>
-                        <li>electron-builder (dev: Electron-userland)</li>
-                        <li>electron-updater (dev: Electron-userland)</li>
-                        <li>electron-log (dev: Megahertz)</li>
-                        <li>electron-json-storage (dev: Electron-userland)</li>
-                        <li>gmll (dev: Hanro50)</li>
-                        <li>jasmine-core (dev: Jasmine)</li>
-                        <li>karma (dev: Karma-runner)</li>
-                        <li>karma-chrome-launcher (dev: Karma-runner)</li>
-                        <li>karma-coverage (dev: Karma-runner)</li>
-                        <li>karma-jasmine (dev: Karma-runner)</li>
-                        <li>karma-jasmine-html-reporter (dev: Karma-runner)</li>
-                        <li>msmc (dev: Hanro50)</li>
+                        <li>&#64;angular/core</li>
+                        <li>&#64;angular/cdk</li>
+                        <li>&#64;angular/common</li>
+                        <li>&#64;angular/compiler</li>
+                        <li>&#64;angular/material</li>
+                        <li>&#64;angular/platform-browser</li>
+                        <li>&#64;angular/platform-browser-dynamic</li>
+                        <li>&#64;angular/router</li>
+                        <li>&#64;angular/forms</li>
+                        <li>&#64;angular/animations</li>
+                        <li>bootstrap</li>
+                        <li>bootstrap-icons</li>
+                        <li>custom-electron-titlebar</li>
+                        <li>discord-rpc</li>
+                        <li>dotenv</li>
+                        <li>electron</li>
+                        <li>electron-builder</li>
+                        <li>electron-updater</li>
+                        <li>electron-log</li>
+                        <li>electron-json-storage</li>
+                        <li>gmll</li>
+                        <li>jasmine-core</li>
+                        <li>karma</li>
+                        <li>karma-chrome-launcher</li>
+                        <li>karma-coverage</li>
+                        <li>karma-jasmine</li>
+                        <li>karma-jasmine-html-reporter</li>
+                        <li>msmc</li>
                         <!-- <li>minecraft-launcher-core</li> -->
-                        <li>notyf (dev: Caroso1222)</li>
-                        <li>ngx-ui-loader (dev: T-ho)</li>
-                        <li>primeng (dev: Primefaces)</li>
-                        <li>rxjs (dev: Reactivex)</li>
-                        <li>tslib (dev: Microsoft)</li>
-                        <li>typescript (dev: Microsoft)</li>
-                        <li>uuid (dev: Uuidjs)</li>
-                        <li>zone.js (dev: Angular)</li>
+                        <li>node-curseforge</li>
+                        <li>notyf</li>
+                        <li>ngx-ui-loader</li>
+                        <li>primeng</li>
+                        <li>ps-node</li>
+                        <li>rxjs</li>
+                        <li>tslib</li>
+                        <li>typescript</li>
+                        <li>uuid</li>
+                        <li>zip-lib</li>
+                        <li>zone.js</li>
                     </ul>
 
-                    <p>Dependencias privadas usadas: </p>
+                    <p>Dependencias privadas: </p>
                     <ul style="font-size: small; opacity: .7;">
-                        <li>&#64;aurora/core (dev: Aurora Studios)</li>
-                        <li>&#64;aurora/logs (dev: Aurora Studios)</li>
-                        <li>&#64;aurora/animations (dev: Aurora Studios)</li>
-                        <li>&#64;aurora/ipc (dev: Aurora Studios)</li>
-                        <li>&#64;aurora/bootstraper (dev: Aurora Studios)</li>
+                        <li>&#64;aurora/core</li>
+                        <li>&#64;aurora/log</li>
+                        <li>&#64;aurora/animations</li>
+                        <li>&#64;aurora/ipc</li>
+                        <li>&#64;aurora/bootstraper</li>
+                        <li>&#64;aurora/reporter</li>
                     </ul>
+
+                    <p>Licencia: </p>
+                    <p class="m-0" style="font-size: small; text-align: justify; opacity: .7;">
+                        The MIT License (MIT) <br><br>
+                        
+                        Copyright (c) 2023 notzairdev <br><br>
+                        
+                        Permission is hereby granted, free of charge, to any person obtaining a copy
+                        of this software and associated documentation files (the "Software"), to deal
+                        in the Software without restriction, including without limitation the rights
+                        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                        copies of the Software, and to permit persons to whom the Software is
+                        furnished to do so, subject to the following conditions: <br><br>
+                        
+                        The above copyright notice and this permission notice shall be included in all
+                        copies or substantial portions of the Software. <br><br>
+                        
+                        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+                        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+                        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+                        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                        SOFTWARE.
+                    </p>
+
+                    <hr>
+
+                    <p class="m-0 opacity-50 text-center" style="font-size: x-small;">Electron version: {{VERSIONS_INFO?.electron}} | Chrome version: {{VERSIONS_INFO?.chrome}} | Angular version: {{VERSIONS_INFO?.angular}} | Updater version: {{VERSIONS_INFO?.updater}} | Node version: {{VERSIONS_INFO?.node}}</p>
                 }
             </p-scrollPanel>
         </div>

@@ -7,6 +7,7 @@ import { DialogService, DynamicDialogModule, DynamicDialogRef } from 'primeng/dy
 import { OfflineComponent } from '../../../modals/offline/offline.component';
 import { LoggerService } from '../../../../shared/services/managers/logger.service';
 import { TooltipModule } from 'primeng/tooltip';
+import { SessionConfig } from '../../../../shared/providers/user.provider';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,7 @@ export class LoginComponent implements OnInit{
   protected spinnerBtn: boolean = false;
   protected spinnerBtn2: boolean = false;
   protected isActiveAction: boolean = true;
+  protected configuration: SessionConfig | null = null;
 
   constructor(
     private _ipc: IpcService,

@@ -35,6 +35,22 @@
     /* box-shadow: rgba(255, 255, 255, 0.7) 0px 2px 8px 0px; */
 }
 
+.btn-selection{
+    background-color: transparent;
+    color: white;
+    border: 0;
+}
+
+.btn-selection i {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 0.75rem rgb(0, 0, 0));
+    transition: all 0.5s;
+}
+
+.btn-selection:hover i{
+    filter: drop-shadow(0 0 0.75rem rgb(255, 255, 255));
+}
+
 .btn-grad {
     background-image: linear-gradient(to right, #085078 0%, #3fc2b3 51%, #085078 100%);
     margin: 10px;

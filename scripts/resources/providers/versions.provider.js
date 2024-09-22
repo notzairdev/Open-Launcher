@@ -38,10 +38,11 @@ function downloadAndInstall(version, progressCallback){
 
         const configuration = JSON.parse(await readConfiguration());
         const instancesPath = configuration.launcher.instances;
+        console.log(instancesPath)
 
-        gmll.config.setRoot(_path.join(fullPath, 'launcher'))
-        gmll.config.setInstances(instancesPath);
         gmll.config.setLauncherName('Open Launcher')
+        gmll.config.setInstances(instancesPath);
+        gmll.config.setRoot(_path.join(fullPath, 'launcher'))
         
         gmll.init().then(async () => {
             const instance = new gmll.Instance({ version: version.version })

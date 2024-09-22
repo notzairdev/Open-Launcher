@@ -25,4 +25,5 @@ export interface SessionConfig {
     launcherInfo: launcherInfo | null;
     launchInfo: launchInfo | null;
     instancesInfo: instancesInfo[];
+    lastPlayed: string;
 }

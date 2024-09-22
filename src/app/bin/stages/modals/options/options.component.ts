@@ -12,6 +12,7 @@ import { DataService } from '../../../shared/services/managers/data.service';
 import { instancesInfo } from '../../../shared/providers/user.provider';
 import { LoggerItem } from '../../../shared/providers/logger.provider';
 import { LoggerService } from '../../../shared/services/managers/logger.service';
+import { VersionsProvider } from '../../../shared/providers/common.provider';
 import { Notyf } from 'notyf';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
 
@@ -43,6 +44,8 @@ export class OptionsComponent implements OnInit{
   protected RAM_ASSIGN: number = 2048;
   protected HIDE_LAUNCH: boolean = true;
 
+  protected VERSIONS_INFO: VersionsProvider | null = null;
+
   constructor(
     private _ipc: IpcService,
     private _data: DataService,
@@ -72,6 +75,15 @@ export class OptionsComponent implements OnInit{
     }
   }
 
+  private getVersions(): void{
+    this._logger.log({ date: new Date(), severity: 'info', message: 'Sending common:versions to try to get a environment versions. Waiting for reply... (Ignore this log)' })
+    this._ipc.send("common:versions")
+    this._ipc.once("common:versions:reply", (event, args) => {
+      this._logger.log({ date: new Date(), severity: 'info', message: 'Received common:versions reply. Updating environment versions... (Ignore this log)' })
+      this.VERSIONS_INFO = args;
+    })
+  }
+
   ngOnInit(): void {
     this._data.getFormData().subscribe((data) => {
       this.NAME = data?.username || "";
@@ -79,7 +91,6 @@ export class OptionsComponent implements OnInit{
     })
 
     this._data.getSessionConfig().subscribe((data) => {
-      // console.log(data)
       this.ROUTE_CACHE = data?.launcherInfo?.cache || "";
       this.ROUTE_INSTANCES = data?.launcherInfo?.instances || "";
 
@@ -92,6 +103,8 @@ export class OptionsComponent implements OnInit{
     this._logger.getLoggerData().subscribe((data) => {
       this.loginfo = data?.items || [];
     })
+
+    this.getVersions();
   }
 
   deleteSession(): void{

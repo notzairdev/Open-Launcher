@@ -97,23 +97,24 @@ export class MiddlewareComponent implements OnInit{
               isOnlineSession: this.IS_ALIVE,
               launcherInfo: this.optionsPacket_A,
               launchInfo: this.optionsPacket_B,
-              instancesInfo: this.optionsPacket_C
+              instancesInfo: this.optionsPacket_C,
+              lastPlayed: versions.lastplayed
             })
 
-            this._logger.log({ date: new Date(), severity: 'info', message: 'Launcher has been loaded successfully. Redirecting to init page. All data has been setted in DataService.'})
+            this._logger.log({ date: new Date(), severity: 'info', message: 'Launcher has been loaded successfully. Redirecting to init stage. All data has been setted in DataService.'})
 
             setTimeout(() => {
               this._rt.navigate(['/init']);
               resolve()
-            }, 2500)
+            }, 5000)
           }
           else {
             this.currentStatus = "Redirigiendo a la página de autenticación..."
-            this._logger.log({ date: new Date(), severity: 'info', message: 'Account is not active. Redirecting to auth page.'})
+            this._logger.log({ date: new Date(), severity: 'info', message: 'Account is not active. Redirecting to auth stage.'})
             setTimeout(() => {
               this._rt.navigate(['/auth']);
               resolve()
-            }, 2500)
+            }, 5000)
           }
         } else {
           notyf.error("Error al leer la configuración del launcher. Elimine la cache del launcher.")
@@ -159,9 +160,9 @@ export class MiddlewareComponent implements OnInit{
     return new Promise((resolve) => {
 
       this.currentStatus = "Conectando con Discord..."
+      this._logger.log({ date: new Date(), severity: 'info', message: 'Creating new RPC connection with Discord. Sending discord:init event, waiting for reply.'})
 
       this._ipc.send('discord:init');
-      this._logger.log({ date: new Date(), severity: 'info', message: 'Creating new RPC connection with Discord. Sending discord:init event, waiting for reply.'})
       this._ipc.once('discord:init:reply', (event, data) => {
         if (data.success === false) {
           this.currentStatus = "Conexión fallida con Discord..."
@@ -182,7 +183,7 @@ export class MiddlewareComponent implements OnInit{
   }
 
   private readLaunchConfiguration(): Promise<void>{
-    this.currentStatus = "Leyendo configuración de lanzamiento..."
+    this.currentStatus = "Leyendo configuración de launcher..."
     
     return new Promise((resolve, reject) => {
       this._ipc.send('configuration:launch');
@@ -329,13 +330,11 @@ export class MiddlewareComponent implements OnInit{
         await this.checkElectronIntegrity();
       }
       else {
-        // await this.checkUpdates();
-        // await this.createNewRPCConnection();
+        await this.checkUpdates();
+        await this.createNewRPCConnection();
         await this.checkElectronIntegrity();
       }
 
-      console.log(this._data.getSessionConfig())
-      
     }
     catch(e){
       console.error(e)
